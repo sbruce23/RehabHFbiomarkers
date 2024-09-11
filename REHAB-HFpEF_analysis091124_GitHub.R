@@ -404,7 +404,7 @@ ggsave(fig1,file='Figure1_ChangeinSPPB.eps',width=6,height=3,device="eps")
 pdf("Figure2_Changein6MWD.pdf",width=6,height=3)
 print(fig2)
 dev.off()
-ggsave(fig2,file='Figure1_Changein6MWD.eps',width=6,height=3,device="eps")
+ggsave(fig2,file='Figure2_Changein6MWD.eps',width=6,height=3,device="eps")
 
 ############################################
 ## 8. Supplemental Table 1 ##
@@ -460,7 +460,7 @@ tbl_summary(rcombds[rcombds$timepoint=='Baseline',
   modify_caption("**Supplemental Table 2**") %>%
   modify_spanning_header(c("stat_1", "stat_2") ~ "**Control (0) vs. Intervention (1)**") %>%
   as_gt() %>% 
-  gtsave(filename = "SuppTable2_secondaryoutcomes.html")
+  gtsave(filename = "SuppTable3_Secondaryoutcomes.html")
 
 ############################################
 ## 10. Supplemental Table 4 (Regression Results - Secondary Outcomes) ##
