@@ -158,16 +158,6 @@ sum(rhfds$study_id %in% rbiods$subject_id[rbiods$timepoint=="Baseline"]
     & (!is.na(rhfds$fu_smw) & !is.na(rhfds$fu_sppb))) #185
 
 #out of the 242 participants with some baseline biomarkers measured,
-#how many have both follow-up SPPB and 6MWD measurements and all 5 baseline biomarkers?
-
-sum(rhfds$study_id %in% rbiods$subject_id[rbiods$timepoint=="Baseline"] 
-    & !is.na(rhfds$fu_smw) & !is.na(rhfds$fu_sppb)
-    & apply(merge(rhfds[,'study_id',drop=FALSE],
-                  rbiods[rbiods$timepoint=="Baseline",1:16],
-                  by.x='study_id',by.y='subject_id',all.x=TRUE)[,12:16],1,
-            function(x) !anyNA(x))) #178 
-
-#out of the 242 participants with some baseline biomarkers measured,
 #how many have some follow-up biomarkers measured?
 sum(rbiods$subject_id[rbiods$timepoint=="Baseline"] %in% 
       rbiods$subject_id[rbiods$timepoint=="Follow Up"]) #157
@@ -525,8 +515,7 @@ ps.df=rcombds[rcombds$timepoint=="Baseline",]
 ps.df$trt=as.numeric(ps.df$intervention_1_control_0)
 ps.df=ps.df[complete.cases(ps.df[,c("creatinine_mg_dl",'troponin_i_pg_ml',
                                     'hs_crp_mg_l','nt_pro_bnp','troponin_t_ng_l','bl_smw','fu_smw')]),]
-#table(is.na(ps.df$fu_sppb),is.na(ps.df$fu_smw))
-
+nrow(ps.df) #165 complete cases
 
 #propensity score for treatment assignment
 ppty=glm(trt~age+sex+race___4+hf_cat
