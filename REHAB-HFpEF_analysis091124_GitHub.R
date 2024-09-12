@@ -7,6 +7,8 @@ library(gt)
 library(gtsummary)
 library(reshape2)
 
+setwd("~/Library/CloudStorage/OneDrive-SharedLibraries-HarvardUniversity/REHAB-HFpEF Ancillary - General/REHAB-HF dataset");
+
 ############################################
 ## 0.1 Data dictionary
 #############################################
@@ -241,26 +243,26 @@ tbl_summary(rcombds[rcombds$timepoint=='Baseline',varlist],
   modify_caption("**Table 1. Baseline Patient Characteristics**") %>%
   modify_spanning_header(c("stat_1", "stat_2") ~ "**Control (0) vs. Intervention (1)**") %>%
   as_gt() %>% 
-  gtsave(filename = "table1_baselinecharacteristics.html")
+  gtsave(filename = "Table1_Baselinecharacteristics.html")
 
 ############################################
-## 5. Spearman correlation of baseline biomarkers ##
+## 5. Supplemental Figure 2 - Spearman correlation of baseline biomarkers ##
 ############################################
 scmat <- round(cor(rbiods[rbiods$timepoint=="Baseline",12:16],
-    method="spearman",use="pairwise.complete.obs"),2)
+                   method="spearman",use="pairwise.complete.obs"),2)
 scmat[lower.tri(scmat)] <- NA
 rownames(scmat) <- colnames(scmat) <- c("Creatinine (mg/dL)",
-                                        "Hs-cTnI (ng/L)","Hs-CRP (mg/dL)",
+                                        "Hs-cTnI (ng/L)","Hs-CRP (mg/L)",
                                         "NT-proBNP (ng/L)","Hs-cTnT (ng/L)")
 scmat_melt <- melt(scmat, na.rm = TRUE)
 
 #compute p-values
 for (i in 1:nrow(scmat_melt)){
-    b1 <- which(rownames(scmat)==as.character(scmat_melt$Var1[i]))
-    b2 <- which(rownames(scmat)==as.character(scmat_melt$Var2[i]))
-    scmat_melt$pval[i] <- cor.test(rbiods[rbiods$timepoint=="Baseline",11+b1],
-                    rbiods[rbiods$timepoint=="Baseline",11+b2],
-                    method="spearman",use="pairwise.complete.obs")$p.value
+  b1 <- which(rownames(scmat)==as.character(scmat_melt$Var1[i]))
+  b2 <- which(rownames(scmat)==as.character(scmat_melt$Var2[i]))
+  scmat_melt$pval[i] <- cor.test(rbiods[rbiods$timepoint=="Baseline",11+b1],
+                                 rbiods[rbiods$timepoint=="Baseline",11+b2],
+                                 method="spearman",use="pairwise.complete.obs")$p.value
 }
 scmat_melt$sig = scmat_melt$pval<0.01
 scmat_melt$text = ifelse(scmat_melt$sig==TRUE & scmat_melt$value != 1,paste0(scmat_melt$value,"*"),scmat_melt$value)
@@ -287,11 +289,11 @@ ggheatmap <- ggplot(scmat_melt, aes(Var2, Var1, fill = value))+
   guides(fill = guide_colorbar(barwidth = 7, barheight = 1,
                                title.position = "top", title.hjust = 0.5))
 # Print the heatmap
-pdf("SpearmanCorrelation.pdf",width=5,height=5)
+pdf("SuppFigure2_SpearmanCorrelation.pdf",width=5,height=5)
 print(ggheatmap)
 dev.off()
 
-ggsave(ggheatmap,file='SpearmanCorrelation.eps',width=5,height=5,device="eps")
+ggsave(ggheatmap,file='SuppFigure2_SpearmanCorrelation.eps',width=5,height=5,device="eps")
 
 ############################################
 ## 6. Table 2 (Linear Regression Results) ##
@@ -338,17 +340,17 @@ for (i in 1:length(bm.name)){
 
 #create long form dataset
 rcombds_long_bl=pivot_longer(data=rcombds[rcombds$timepoint=='Baseline',
-                                       c("subject_id","timepoint","intervention_1_control_0",
-                                          bm.name,"bl_smw","fu_smw","bl_sppb","fu_sppb")],
+                                          c("subject_id","timepoint","intervention_1_control_0",
+                                            bm.name,"bl_smw","fu_smw","bl_sppb","fu_sppb")],
                              cols=c('creatinine_mg_dl':'troponin_t_ng_l'),
-                          names_to='Biomarker',values_to='ExpressionLevel')
+                             names_to='Biomarker',values_to='ExpressionLevel')
 rcombds_long_bl$intervention_1_control_0 <- factor(rcombds_long_bl$intervention_1_control_0,levels=c(0,1))
 rcombds_long_bl$sppb_chg = rcombds_long_bl$fu_sppb - rcombds_long_bl$bl_sppb
 rcombds_long_bl$smw_chg = rcombds_long_bl$fu_smw - rcombds_long_bl$bl_smw
 colnames(rcombds_long_bl)[3] <- "Intervention"
 rcombds_long_bl$Biomarker = factor(rcombds_long_bl$Biomarker,levels=c("creatinine_mg_dl","hs_crp_mg_l",
-                                            "troponin_t_ng_l","nt_pro_bnp","troponin_i_pg_ml"))
-bm.labs <- c("Creatinine (mg/dL)", "Hs-CRP (mg/dL)","Hs-cTnT (ng/L)", "NT-proBNP (ng/L)",
+                                                                      "troponin_t_ng_l","nt_pro_bnp","troponin_i_pg_ml"))
+bm.labs <- c("Creatinine (mg/dL)", "Hs-CRP (mg/L)","Hs-cTnT (ng/L)", "NT-proBNP (ng/L)",
              "Hs-cTnI (ng/L)")
 names(bm.labs) <- levels(rcombds_long_bl$Biomarker)
 
@@ -397,7 +399,7 @@ dev.off()
 ggsave(fig2,file='Figure2_Changein6MWD.eps',width=6,height=3,device="eps")
 
 ############################################
-## 8. Supplemental Table 1 ##
+## 8. Supplemental Table 1 compare those with biomarkers vs. unmeasured ##
 ############################################
 #supplemental table 1: comparing those with baseline biomarkers measured vs. no baseline biomarkers
 rhfds$bm_measured = (rhfds$study_id %in% 
@@ -427,7 +429,7 @@ tbl_summary(rhfds[,c("bm_measured","age","sex","race___4","hf_cat","egfr","bl_sp
   gtsave(filename = "SuppTable1_measuredvsunmeasured.html")
 
 ############################################
-## 9. Supplemental Table 3 ##
+## 9. Supplemental Table 3 - secondary outcomes  ##
 ############################################
 
 tbl_summary(rcombds[rcombds$timepoint=='Baseline',
@@ -640,11 +642,11 @@ tree.rpart=rpart(outcome.diff~creatinine_mg_dl+troponin_i_pg_ml+hs_crp_mg_l+
 set.total$outcome = set.total$fu_smw - set.total$bl_smw
 tree.all=jesse.tree.select(tree.rpart,set.total)
 
-pdf("Matchingtree_SPPB.pdf")
+pdf("Figure3a_Matchingtree_SPPB.pdf")
 rpart.plot(tree.all,box.palette = 'Reds',extra=1)
 dev.off()
 setEPS()
-postscript("Matchingtree_SPPB.eps")
+postscript("Figure3a_Matchingtree_SPPB.eps")
 rpart.plot(tree.all,box.palette = 'Reds',extra=1)
 dev.off()
 
@@ -697,10 +699,10 @@ for (i in 1:max(folds)){
   
   #this is the result from CART (update with different rpart.control params)
   tmp=rpart(outcome.diff~creatinine_mg_dl+troponin_i_pg_ml+hs_crp_mg_l+
-                     nt_pro_bnp+troponin_t_ng_l,
-                   method="anova",data=set.total[set.total$pairin %in% pairs.train,],
-                   control=rpart.control(minbucket = 20))
-
+              nt_pro_bnp+troponin_t_ng_l,
+            method="anova",data=set.total[set.total$pairin %in% pairs.train,],
+            control=rpart.control(minbucket = 20))
+  
   #this is the result after prune
   set.total$outcome = set.total$fu_smw - set.total$bl_smw
   tree.2[[i]]=jesse.tree.select(tmp,set.total)
@@ -713,7 +715,7 @@ for (i in 1:max(folds)){
   df=cbind(set.total,tree.leaves[[i]])
   colnames(df)
   tree.mod.train[[i]]=summary(lm(outcome.diff ~ 0 + as.factor(`tree.leaves[[i]]`), data=df[df$pairin %in% pairs.train,]))
-
+  
 }
 
 pdf("Matchingtree_SPPB_LOO.pdf", onefile = TRUE)
@@ -741,11 +743,11 @@ tree.rpart=rpart(outcome.diff~creatinine_mg_dl+troponin_i_pg_ml+hs_crp_mg_l+
 set.total$outcome = set.total$fu_smw - set.total$bl_smw
 tree.all=jesse.tree.select(tree.rpart,set.total)
 
-pdf("Matchingtree_6MWD.pdf")
+pdf("Figure3b_Matchingtree_6MWD.pdf")
 rpart.plot(tree.all,box.palette = 'Reds',extra=1)
 dev.off()
 setEPS()
-postscript("Matchingtree_6MWD.eps")
+postscript("Figure3b_Matchingtree_6MWD.eps")
 rpart.plot(tree.all,box.palette = 'Reds',extra=1)
 dev.off()
 
@@ -860,10 +862,10 @@ tbl_summary(tmpdf,
 )  %>% modify_header(label ~ "**Variable**") %>% 
   modify_caption("**Supplemental Table 2. Baseline Measurements (Unmatched vs. Matched)**") %>%
   as_gt() %>% 
-  gtsave(filename = "Supptable2_matchedvsunmatched.html")
+  gtsave(filename = "SuppTable2_matchedvsunmatched.html")
 
 ######################
-## 16. Supplemental figure 2 
+## 16. Supplemental figure 3 - biomarker change (baseline to follow up) 
 ######################
 #create long form dataset
 rcombds_long_fu=pivot_longer(data=rcombds[rcombds$timepoint=='Follow Up',
@@ -877,7 +879,7 @@ rcombds_long_fu$smw_chg = rcombds_long_fu$fu_smw - rcombds_long_fu$bl_smw
 colnames(rcombds_long_fu)[3] <- "Intervention"
 rcombds_long_fu$Biomarker = factor(rcombds_long_fu$Biomarker,levels=c("creatinine_mg_dl","hs_crp_mg_l",
                                                                       "troponin_t_ng_l","nt_pro_bnp","troponin_i_pg_ml"))
-bm.labs <- c("Creatinine (mg/dL)", "Hs-CRP (mg/dL)","Hs-cTnT (ng/L)", "NT-proBNP (ng/L)",
+bm.labs <- c("Creatinine (mg/dL)", "Hs-CRP (mg/L)","Hs-cTnT (ng/L)", "NT-proBNP (ng/L)",
              "Hs-cTnI (ng/L)")
 names(bm.labs) <- levels(rcombds_long_fu$Biomarker)
 
@@ -887,26 +889,26 @@ rcombds_wide=merge(rcombds_long_bl,
 rcombds_wide$Biomarker_change = log2(rcombds_wide$ExpressionLevel.y+0.001) - log2(rcombds_wide$ExpressionLevel.x+0.001)
 
 supfig2 <- ggplot(data=rcombds_wide,
-             mapping=aes(x=Intervention, y=ExpressionLevel.y/ExpressionLevel.x, fill=Intervention))+
-        geom_violin()+facet_wrap_paginate('Biomarker',scales='free',ncol=2,nrow=3,
-                                          page=1,labeller = labeller(Biomarker = bm.labs))+hw+
-        labs(y="Ratio of change from baseline to 12-weeks")+
-        geom_hline(yintercept=1,linetype=2)+
-        scale_y_continuous(trans='log2',labels = function(x) sprintf("%.3f", x))+
-        scale_x_discrete(breaks=c(1,0),
-                         labels=c("RI","AC"))+
-        scale_fill_discrete(breaks=c(0,1),
-                            labels=c("Attention Control (AC)","Rehabilitation Intervention (RI)"))+
-        theme(axis.title.x = element_blank(),
-              axis.title.y = element_text(face="bold"),
-              legend.title = element_blank(),
-              legend.position = c(0.75,0.15),
-              legend.box.background = element_rect(color = "black"))
+                  mapping=aes(x=Intervention, y=ExpressionLevel.y/ExpressionLevel.x, fill=Intervention))+
+  geom_violin()+facet_wrap_paginate('Biomarker',scales='free',ncol=2,nrow=3,
+                                    page=1,labeller = labeller(Biomarker = bm.labs))+hw+
+  labs(y="Ratio of change from baseline to 12-weeks")+
+  geom_hline(yintercept=1,linetype=2)+
+  scale_y_continuous(trans='log2',labels = function(x) sprintf("%.3f", x))+
+  scale_x_discrete(breaks=c(1,0),
+                   labels=c("RI","AC"))+
+  scale_fill_discrete(breaks=c(0,1),
+                      labels=c("Attention Control (AC)","Rehabilitation Intervention (RI)"))+
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_blank(),
+        legend.position = c(0.75,0.15),
+        legend.box.background = element_rect(color = "black"))
 
 
-pdf("SuppFigure2_biomarkerchange.pdf",height=9,width=7,onefile = TRUE)
+pdf("SuppFigure3_Biomarkerchange.pdf",height=9,width=7,onefile = TRUE)
 supfig2
 dev.off()
-ggsave(supfig2,file='SuppFigure2_biomarkerchange.eps',height=9,width=7,device="eps")
+ggsave(supfig2,file='SuppFigure3_Biomarkerchange.eps',height=9,width=7,device="eps")
 
 
